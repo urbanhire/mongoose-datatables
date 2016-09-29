@@ -1,34 +1,33 @@
 # mongoose-datatables
 
-Server side table request.
+Mongoose Datatables plugin refactored
 
 [![Build Status](https://travis-ci.org/archr/mongoose-datatables.svg)](https://travis-ci.org/archr/mongoose-datatables)
 
 ## Installation
 ```sh
-$ npm install mongoose-datatables
+$ npm i --save https://github.com/urbanhire/mongoose-datatables#staging
 ```
 
 ## Configuration
-plugin(schema, options)
-* `totalKey` (String) - Default total
-* `dataKey` (String) - Default data
+plugin(schema)
 
 ```javascript
-var mongoose = require(‘mongoose’);
-var dataTables = require(‘mongoose-datatables’);
-var Schema = mongoose.Schema;
+'use strict'
 
-var UserSchema = new Schema({
-  first_name: String,
-  last_name: String,
-  username: String
-});
+var db = require('mongoose')
+const dataTables = require('mongoose-datatables')
 
-UserSchema.plugin(dataTables, {
-  totalKey: 'recordsTotal',
-  dataKey: 'data'
-});
+var Position = new db.Schema({
+  ...omitted
+})
+
+Position.plugin(dataTables)
+
+db.model('Position', Position)
+
+module.exports = Position
+
 ```
 
 ## Usage
@@ -45,19 +44,21 @@ The available parmas are:
 
 
 ```javascript
-app.post('/table', (req, res) {
-  User.dataTables({
-    limit: req.body.length,
-    skip: req.body.start,
-    search: {
-      value: req.body.search.value,
-      fields: ['username']
+app.get('/api', (req, res, next) => {
+  Position
+    .dataTables({
+      limit: limit, // Number
+      sort: sortQuery, // {'name' : 'ascending'}
+      find: query, // {''}
+      skip: skip,
+      populate: [{path:'company', select:'name'}],
+      select: 'name slug company'
     },
-    sort: {
-      username: 1
-    }
-  }, function (err, table) {
-    res.json(table); // table.total, table.data
-  });
-});
+    (err, positions) => {
+      if (err) return res.status(500).send('Internal Server Error')
+      else {
+        return res.status(200).json(positions)
+      }
+    })
+})
 ```
